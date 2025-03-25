@@ -1,6 +1,10 @@
+using CourierApp.infrastructure.Context;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddDbContext<CourierAppContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("CourierAppStrConnection") ?? throw new InvalidOperationException("Connection string 'CourierAppContext' not found.")));
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
