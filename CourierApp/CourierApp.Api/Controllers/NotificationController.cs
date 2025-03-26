@@ -8,157 +8,132 @@ using Microsoft.EntityFrameworkCore;
 using CourierApp.Domain.Entities;
 using CourierApp.infrastructure.Context;
 
-namespace CourierApp.Web.Controllers
+namespace CourierApp.Api.Controllers;
+[ApiController]
+[Route("[controller]")]
+public class NotificationController : ControllerBase
 {
-    public class NotificationController : Controller
+    private readonly CourierAppContext _context;
+
+    public NotificationController(CourierAppContext context)
     {
-        private readonly CourierAppContext _context;
+        _context = context;
+    }
 
-        public NotificationController(CourierAppContext context)
+    [HttpGet(nameof(GetAll))]
+    public async Task<IActionResult> GetAll(string filter = "")
+    {
+
+        var entities = await _context.Notifications.ToListAsync();
+
+
+
+        var list = entities.Select(entity => new NotificationDtos
         {
-            _context = context;
+            Id = entity.Id,
+            Message = entity.Message,
+            UserId = entity.UserId,
+            CreatedAt = entity.CreatedAt,
+        }).ToList();
+
+        return Ok(list);
+    }
+
+    [HttpGet("Get/{id}")]
+    public async Task<IActionResult> Get(int id)
+    {
+        var entitydb = await _context.Notifications.FindAsync(id);
+        if (entitydb == null)
+        {
+            return BadRequest("Not found");
         }
 
-        // GET: Notification
-        public async Task<IActionResult> Index()
+        var entity = new NotificationDtos
         {
-            var courierAppContext = _context.Notifications.Include(n => n.User);
-            return View(await courierAppContext.ToListAsync());
+            Id = entitydb.Id,
+            Message = entitydb.Message,
+            UserId = entitydb.UserId,
+            CreatedAt = entitydb.CreatedAt,
+        };
+
+        return Ok(entity);
+    }
+
+    [HttpPost("Add")]
+    public async Task<IActionResult> Create([FromBody] NotificationDtos dto)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest("The entity is invalid");
         }
 
-        // GET: Notification/Details/5
-        public async Task<IActionResult> Details(int? id)
+        
+        var entity = new Notification
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            Id = dto.Id,
+            Message = dto.Message,
+            UserId = dto.UserId,
+            CreatedAt = dto.CreatedAt,
+        };
 
-            var notification = await _context.Notifications
-                .Include(n => n.User)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (notification == null)
-            {
-                return NotFound();
-            }
+        _context.Notifications.Add(entity);
+        await _context.SaveChangesAsync();
+        return Ok(new { success = true, message = "Created successfully!" });
+    }
 
-            return View(notification);
+    [HttpPut(nameof(Update))]
+    public async Task<IActionResult> Update([FromBody] NotificationDtos dto)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest("The entity is invalid");
         }
 
-        // GET: Notification/Create
-        public IActionResult Create()
+        var entity = new Notification
         {
-            ViewData["UserId"] = new SelectList(_context.Users, "Id", "Email");
-            return View();
-        }
+            Id = dto.Id,
+            Message = dto.Message,
+            UserId = dto.UserId,
+            CreatedAt = dto.CreatedAt,
+        };
 
-        // POST: Notification/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Message,UserId,CreatedAt")] NotificationDtos notification)
+        try
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(notification);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["UserId"] = new SelectList(_context.Users, "Id", "Email", notification.UserId);
-            return View(notification);
-        }
-
-        // GET: Notification/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var notification = await _context.Notifications.FindAsync(id);
-            if (notification == null)
-            {
-                return NotFound();
-            }
-            ViewData["UserId"] = new SelectList(_context.Users, "Id", "Email", notification.UserId);
-            return View(notification);
-        }
-
-        // POST: Notification/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Message,UserId,CreatedAt")] NotificationDtos notification)
-        {
-            if (id != notification.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(notification);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!NotificationExists(notification.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["UserId"] = new SelectList(_context.Users, "Id", "Email", notification.UserId);
-            return View(notification);
-        }
-
-        // GET: Notification/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var notification = await _context.Notifications
-                .Include(n => n.User)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (notification == null)
-            {
-                return NotFound();
-            }
-
-            return View(notification);
-        }
-
-        // POST: Notification/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var notification = await _context.Notifications.FindAsync(id);
-            if (notification != null)
-            {
-                _context.Notifications.Remove(notification);
-            }
-
+            _context.Update(entity);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!EstudianteExists(entity.Id))
+            {
+                return BadRequest("Not found");
+            }
+            else
+            {
+                throw;
+            }
         }
 
-        private bool NotificationExists(int id)
+        return Ok(new { success = true, message = "Updated successfully!" });
+    }
+
+    [HttpDelete("Delete/{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var entityDb = await _context.Notifications.FindAsync(id);
+        if (entityDb == null)
         {
-            return _context.Notifications.Any(e => e.Id == id);
+            return BadRequest("Not found");
         }
+
+        _context.Notifications.Remove(entityDb);
+        await _context.SaveChangesAsync();
+        return Ok(new { success = true, message = "Deleted successfully!" });
+    }
+
+    private bool EstudianteExists(int id)
+    {
+        return _context.Notifications.Any(e => e.Id == id);
     }
 }
+

@@ -1,4 +1,4 @@
-﻿@model CourierApp.Domain.Entities.Notification
+﻿@* @model CourierApp.Domain.Entities.Notification
 
 @{
     ViewData["Title"] = "Edit";
@@ -41,4 +41,91 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+ *@
+ @model NotificationViewModel
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Editar</h1>
+
+<h4>Notification</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <input type="hidden" id="modelId" value="@Model.Id" />
+
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="form-group">
+            <label class="control-label">Mensaje</label>
+            <input class="form-control" id="message" />
+        </div>
+
+        <div class="form-group">
+            <label class="control-label">Usuario</label>
+            <input class="form-control" id="userId" />
+        </div>
+
+        <div class="form-group">
+            <label class="control-label">Fecha de Creacion</label>
+            <input class="form-control" id="createdAt" />
+        </div>
+
+
+        <div class="form-group">
+            <button onclick="actualizarNotification()" class="btn btn-primary">Actualizar</button>
+        </div>
+
+    </div>
+</div>
+
+<a asp-action="Index">Regresar<i class="bi bi-arrow-90deg-left"></i></a>
+
+@section Scripts {
+    <script>
+
+        $(document).ready(function () {
+            cargarNotification(@Model.Id);
+
+        });
+
+        function cargarNotification(id) {
+            $.get(`${APInotification}/Get/${id}`, function (entity) {
+                $("#message").val(entity.message);
+                $("#userId").val(entity.userId);
+                $("#createdAt").val(entity.createdAt);
+            });
+        }
+
+
+        function actualizarNotification() {
+            let entity = {
+                id: $("#modelId").val(),
+                nomessage: $("#nombre").val(),
+                userId: $("#userId").val(),
+                createdAt: $("#createdAt").val(),
+
+            };
+
+            $.ajax({
+                url: `${APInotification}/Update`,
+                type: "PUT",
+                contentType: "application/json",
+                data: JSON.stringify(entity),
+                success: function (response) {
+                    if (response.success) {
+                        window.location.href = "/Notification/Index";
+                    } else {
+                        alert("Error: " + response.message);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("AJAX Error:", status, error);
+                    alert("An error occurred. Please try again.");
+                }
+            });
+        }
+    </script>
 }

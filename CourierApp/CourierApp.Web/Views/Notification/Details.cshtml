@@ -1,4 +1,4 @@
-﻿@model CourierApp.Domain.Entities.Notification
+﻿@* @model CourierApp.Domain.Entities.Notification
 
 @{
     ViewData["Title"] = "Details";
@@ -34,3 +34,51 @@
     <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
     <a asp-action="Index">Back to List</a>
 </div>
+ *@
+ @model NotificationViewModel
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Detalles</h1>
+
+<div>
+    <h4>Notificacion</h4>
+    <hr />
+
+    <dl class="row">
+        <dt class="col-sm-2">Mensaje</dt>
+        <dd class="col-sm-10" id="message"></dd>
+
+        <dt class="col-sm-2">Usuario</dt>
+        <dd class="col-sm-10" id="user"></dd>
+
+        <dt class="col-sm-2">Correo</dt>
+        <dd class="col-sm-10" id=user.email></dd>
+
+        <dt class="col-sm-2">Fecha de Creacion</dt>
+        <dd class="col-sm-10" id="createdAt"></dd>
+
+    </dl>
+</div>
+
+<a asp-action="Index" class="btn btn-secondary">Regresar<i class="bi bi-arrow-90deg-left"></i></a>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            loadDetails(@Model.Id);
+        });
+
+        function loadDetails(id) {
+            $.get(${ APInotification } / Get / ${ id }, function (entity) {
+                $("#message").text(entity.message);
+                $("#userId").text(entity.userId);
+                $("#user.email").text(entity.user.email);
+                $("#createdAt").text(entity.createdAt);
+
+            });
+        }
+    </script>
+}
